@@ -1,3 +1,3 @@
-module github.com/netspeed
+module github/rilysh/netspeed
 
-go 1.19
+go 1.18
