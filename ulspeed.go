@@ -5,18 +5,25 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
 
-// private function, used to request to the server
-func dl(ctx context.Context, url string) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// private function to create upload request to the server
+func ul(ctx context.Context, purl string) {
+	val := url.Values{}
+
+	val.Add("content", strings.Repeat("0123456789", 2800*100-51))
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, purl, strings.NewReader(val.Encode()))
 
 	if err != nil {
 		fmt.Println("An error occurred when trying to create a new http context.\nFull log: " + err.Error())
 		return
 	}
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	client := http.Client{}
 	resp, err := client.Do(req)
@@ -36,31 +43,28 @@ func dl(ctx context.Context, url string) {
 	}
 }
 
-// function to test the download speed
-func dlspeed(ctx context.Context) (string, error) {
+// function to test the upload speed
+func ulspeed(ctx context.Context) (string, error) {
 	exit := make(chan bool)
 	url, err := getClosetServer(ctx)
-
-	url = strings.ReplaceAll(url, "upload.php", "random1000x1000.jpg")
 
 	if err != nil {
 		return "", err
 	}
 
 	fmt.Print("Testing: ")
-
 	// execute progressbar asynchronously
 	go progressBar(exit)
 
 	speed := 0.0
 	startTime := time.Now()
 
-	// maximum 6 rounds, increase according your needs
+	// maximum 6 rounds, increasde according your needs
 	for i := 0; i < 6; i++ {
-		dl(ctx, url)
+		ul(ctx, url)
 
 		endTime := time.Now()
-		reqMB := 1000 * 1000 * 2 / 1000 / 1000
+		reqMB := 3
 
 		speed = float64(reqMB) * 8 * float64(6) / endTime.Sub(startTime).Seconds()
 
